@@ -51,8 +51,12 @@ jobs:
         run: |
           $exe = "dist\GravadorDaily\GravadorDaily.exe"
           if (-not (Test-Path $exe)) { throw "Executável não encontrado: $exe" }
-          & $exe --selftest
-          if ($LASTEXITCODE -ne 0) { throw "Selftest do executável falhou: $LASTEXITCODE" }
+          # O exe é de interface (windowed): "&" não espera o término. Start-Process -Wait espera
+          # e devolve o código de saída.
+          $p = Start-Process -FilePath $exe -ArgumentList "--selftest" -Wait -PassThru -NoNewWindow
+          $log = Join-Path $env:LOCALAPPDATA "GravadorDaily\log.txt"
+          if (Test-Path $log) { Write-Host "--- log.txt ---"; Get-Content $log -Tail 40 }
+          if ($p.ExitCode -ne 0) { throw "Selftest do executável falhou: $($p.ExitCode)" }
 
       - name: Compactar dist/GravadorDaily
         shell: pwsh
