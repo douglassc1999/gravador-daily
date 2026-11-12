@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gravador-daily"
+version = "1.0.0"
+description = "Grava reuniões (mic + som do sistema) e transcreve em português com faster-whisper."
+requires-python = ">=3.9"
+readme = "README.md"
+authors = [{ name = "Douglas Carvalho" }]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "windows: testes que só fazem sentido no Windows",
+    "modelo: testes que exigem o modelo Whisper baixado",
+    "audio_real: testes que exigem reconhecimento de fala real (lento)",
+]

@@ -1,0 +1,9 @@
+# Dependências de execução do Gravador de Daily.
+#
+# O loopback do WASAPI (som do computador) é capturado com PyAudioWPatch,
+# que só existe no Windows — por isso o marcador de plataforma.
+faster-whisper==1.2.1
+numpy>=1.26
+imageio-ffmpeg>=0.4.9
+sounddevice>=0.4.6; sys_platform != "win32"
+PyAudioWPatch>=0.2.12; sys_platform == "win32"
