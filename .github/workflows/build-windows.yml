@@ -1,0 +1,76 @@
+name: build-windows
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Rodar testes (sem Windows/modelo)
+        run: pytest -m "not windows and not modelo and not audio_real"
+
+      - name: Baixar o modelo small
+        run: python scripts/baixar_modelo.py
+
+      - name: Selftest em desenvolvimento (carrega o modelo)
+        run: python lancador.py --selftest
+
+      - name: Instalar PyInstaller
+        run: pip install "pyinstaller>=6.6"
+
+      - name: Gerar o executável (onedir)
+        run: pyinstaller --noconfirm gravador-daily.spec
+
+      - name: Smoke test do executável empacotado
+        shell: pwsh
+        run: |
+          $exe = "dist\GravadorDaily\GravadorDaily.exe"
+          if (-not (Test-Path $exe)) { throw "Executável não encontrado: $exe" }
+          & $exe --selftest
+          if ($LASTEXITCODE -ne 0) { throw "Selftest do executável falhou: $LASTEXITCODE" }
+
+      - name: Compactar dist/GravadorDaily
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\GravadorDaily -DestinationPath GravadorDaily-windows.zip -Force
+
+      - name: Publicar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: GravadorDaily-windows
+          path: GravadorDaily-windows.zip
+          if-no-files-found: error
+
+      - name: Criar Release (somente em tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: GravadorDaily-windows.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,23 @@
+# Ignorar artefatos de build/Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+*.spec.bak
+
+# Modelo Whisper (baixado por scripts/baixar_modelo.py — não versionar)
+modelos/
+
+# Saídas de teste e capturas temporárias
+*.wav
+*.mp3
+*.srt
+!docs/*
+
+# IDE / sistema
+.idea/
+.vscode/
+.DS_Store
