@@ -35,7 +35,13 @@ def esta_empacotado() -> bool:
 def pasta_app() -> Path:
     """Pasta base do aplicativo (onde vive ``modelos/`` e o ffmpeg embutido)."""
     if esta_empacotado():
-        return Path(sys.executable).resolve().parent
+        exe = Path(sys.executable).resolve().parent
+        # PyInstaller 6 (onedir) coloca os dados em ``_internal`` (sys._MEIPASS).
+        meipass = getattr(sys, "_MEIPASS", None)
+        for base in ([Path(meipass)] if meipass else []) + [exe, exe / "_internal"]:
+            if (base / "modelos").exists():
+                return base
+        return exe
     return _raiz_projeto()
 
 
